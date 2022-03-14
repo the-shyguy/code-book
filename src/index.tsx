@@ -1,11 +1,12 @@
-import ReactDom from "react-dom";
-import { useState, useEffect, useRef } from "react";
 import * as esbuild from "esbuild-wasm";
+import { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
+import { unpkgPathPlugin } from "./plugins/unpkg-path-plugin";
 
 const App = () => {
+  const ref = useRef<any>();
   const [input, setInput] = useState("");
   const [code, setCode] = useState("");
-  const ref = useRef<any>();
 
   const startService = async () => {
     ref.current = await esbuild.startService({
@@ -22,12 +23,16 @@ const App = () => {
       return;
     }
 
-    const result = await ref.current.transform(input, {
-      loader: "jsx",
-      target: "es2015",
+    const result = await ref.current.build({
+      entryPoints: ["index.js"],
+      bundle: true,
+      write: false,
+      plugins: [unpkgPathPlugin()],
     });
 
-    setCode(result.code);
+    // console.log(result);
+
+    setCode(result.outputFiles[0].text);
   };
 
   return (
@@ -37,11 +42,11 @@ const App = () => {
         onChange={(e) => setInput(e.target.value)}
       ></textarea>
       <div>
-        <button onClick={onClick}>Sumit</button>
+        <button onClick={onClick}>Submit</button>
       </div>
       <pre>{code}</pre>
     </div>
   );
 };
 
-ReactDom.render(<App />, document.querySelector("#root"));
+ReactDOM.render(<App />, document.querySelector("#root"));
